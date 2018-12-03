@@ -27,7 +27,5 @@ public class Day01_2 {
                 seenFrequencies.add(frequency);
             }
         }
-
-        System.out.println(frequency);
     }
 }
