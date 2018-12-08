@@ -13,7 +13,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-public class Day04_1 {
+public class Day04_2 {
 
     public static void run() throws IOException {
         final Deque<Record> records = Files.readAllLines(Path.of("input04"))
@@ -25,12 +25,9 @@ public class Day04_1 {
         final Collection<Guard> guards = parseGuards(records);
 
         // 1. find guard that sleeps the most minutes
-        final Guard maxSleepGuard = guards.stream().max(Comparator.comparing(Guard::getTotalSleep)).get();
+        final Guard maxSleepGuard = guards.stream().max(Comparator.comparing(Guard::getSleepPeakCount)).get();
 
-        // 2. at which minute does he most often sleep
-        int maxMinute = maxSleepGuard.getSleepPeakMinute();
-
-        final int answer = maxSleepGuard.iId * maxMinute;
+        final int answer = maxSleepGuard.iId * maxSleepGuard.getSleepPeakMinute();
         System.out.println(answer);
     }
 
@@ -53,7 +50,7 @@ public class Day04_1 {
                 final Record sleep = records.pop();
                 final Record wake = records.pop();
                 guard.iSleeps.add(new Sleep(sleep.getTimeStamp().getMinute(),
-                                            wake.getTimeStamp().getMinute()));
+                                     wake.getTimeStamp().getMinute()));
                 guard.iWakes.add(new Wake(wake.getTimeStamp().getMinute()));
             }
 
@@ -112,6 +109,8 @@ public class Day04_1 {
         final int iId;
         final ArrayList<Sleep> iSleeps;
         final ArrayList<Wake> iWakes;
+        int iSleepPeekCount = -1;
+        int iSleepPeekMinute = -1;
 
         public Guard(final int id, final ArrayList<Sleep> sleeps, final ArrayList<Wake> wakes) {
             iId = id;
@@ -132,19 +131,33 @@ public class Day04_1 {
             return states;
         }
 
-        public int getSleepPeakMinute() {
-            int current = 0;
-            int max = 0;
-            int maxMinute = 0;
+        private void cacheSleepPeakData() {
+            if (iSleepPeekCount == -1 || iSleepPeekMinute == -1)
+            {
+                int current = 0;
+                int max = 0;
+                int maxMinute = 0;
 
-            for (State state : getStatesOrdered()) {
-                current += state.getValue(); // increase decrease with sleep/awake
-                if (current > max) {
-                    max = current;
-                    maxMinute = state.getMinute();
+                for (State state : getStatesOrdered()) {
+                    current += state.getValue(); // increase decrease with sleep/awake
+                    if (current > max) {
+                        max = current;
+                        maxMinute = state.getMinute();
+                    }
                 }
+                iSleepPeekCount = max;
+                iSleepPeekMinute = maxMinute;
             }
-            return maxMinute;
+        }
+
+        public int getSleepPeakMinute() {
+            cacheSleepPeakData();
+            return iSleepPeekMinute;
+        }
+
+        public int getSleepPeakCount() {
+            cacheSleepPeakData();
+            return iSleepPeekCount;
         }
     }
 
